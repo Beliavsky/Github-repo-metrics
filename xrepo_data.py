@@ -1,3 +1,4 @@
+""" for a set of GitHub URLs, scrape data for the repos and print it """
 from github_util import repo_data
 
 max_repos = None
