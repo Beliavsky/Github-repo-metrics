@@ -4,6 +4,7 @@ import requests
 import os
 import time
 import ast
+from datetime import datetime
 
 # GitHub API token handling
 TOKEN_FILE = "github_token.txt"  # File to read token from
@@ -253,3 +254,83 @@ def topics_to_repos(repo_dict):
             else:
                 topic_map[topic] = [repo_url]    
     return topic_map
+
+def repo_creation_date_api(owner, repo, token=None):
+    """
+    Get the creation date of a GitHub repository using the GitHub API.
+    
+    Args:
+        owner (str): Repository owner (e.g., 'ef1j')
+        repo (str): Repository name (e.g., 'Art1')
+        token (str, optional): GitHub personal access token for higher rate limits
+    
+    Returns:
+        datetime: Creation date of the repo, or None if fetch fails
+    """
+    url = f"https://api.github.com/repos/{owner}/{repo}"
+    headers = {
+        "Accept": "application/vnd.github.v3+json",
+    }
+    if token:
+        headers["Authorization"] = f"token {token}"
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code == 403 and "rate limit" in response.text.lower():
+            print(f"Rate limit exceeded for {url}. Consider using a token or waiting.")
+            return None
+        response.raise_for_status()
+        
+        data = response.json()
+        created_at = data.get("created_at")
+        if created_at:
+            return datetime.strptime(created_at, "%Y-%m-%dT%H:%M:%SZ")
+        return None
+    
+    except requests.RequestException as e:
+        print(f"Error fetching {url}: {e}")
+        return None
+    
+    finally:
+        time.sleep(1)  # Be polite to GitHub servers
+
+def repo_info(owner, repo, token=None):
+    """
+    Fetch all available fields for a GitHub repository using the GitHub API.
+    
+    Args:
+        owner (str): Repository owner (e.g., 'ef1j')
+        repo (str): Repository name (e.g., 'Art1')
+        token (str, optional): GitHub personal access token for higher rate limits
+    
+    Returns:
+        dict: Dictionary containing all fields from the API response,
+              or an empty dict if the fetch fails
+    """
+    url = f"https://api.github.com/repos/{owner}/{repo}"
+    headers = {
+        "Accept": "application/vnd.github.v3+json",
+    }
+    if token:
+        headers["Authorization"] = f"token {token}"
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code == 403 and "rate limit" in response.text.lower():
+            print(f"Rate limit exceeded for {url}. Consider using a token or waiting.")
+            return {}
+        elif response.status_code == 404:
+            print(f"Repository not found: {owner}/{repo}")
+            return {}
+        response.raise_for_status()
+        
+        # Return the full JSON response as a dictionary
+        data = response.json()
+        print(f"Successfully fetched data for {owner}/{repo}")
+        return data
+    
+    except requests.RequestException as e:
+        print(f"Error fetching {url}: {e}")
+        return {}    
+    finally:
+        time.sleep(1)  # Be polite to GitHub servers
