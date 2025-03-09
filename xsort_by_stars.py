@@ -1,3 +1,12 @@
+"""Sorts GitHub repositories by topic from 'topic_lists.txt' and displays their stars, license, 
+and additional topics from 'repo_data.txt' in descending order of stars.
+
+The script reads two files:
+- 'topic_lists.txt': Lists of repository URLs grouped by topic.
+- 'fortran_repo_data.txt': Repository details (stars, license, topics).
+Outputs sorted repository information for each topic, excluding repos without data.
+"""
+
 from collections import defaultdict
 import ast
 
